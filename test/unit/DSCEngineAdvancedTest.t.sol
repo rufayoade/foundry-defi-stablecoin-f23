@@ -18,7 +18,7 @@ contract DSCEngineAdvancedTest is Test {
     address btcUsdPriceFeed;
     address weth;
     address wbtc;
-    
+
     address public USER = makeAddr("user");
     address public LIQUIDATOR = makeAddr("liquidator");
     uint256 public constant AMOUNT_COLLATERAL = 10 ether;
@@ -44,7 +44,7 @@ contract DSCEngineAdvancedTest is Test {
     function setUp() public {
         deployer = new DeployDSC();
         (dsc, dsce, config) = deployer.run();
-        (ethUsdPriceFeed, btcUsdPriceFeed, weth, wbtc, ) = config.activeNetworkConfig();
+        (ethUsdPriceFeed, btcUsdPriceFeed, weth, wbtc,) = config.activeNetworkConfig();
 
         ERC20Mock(weth).mint(USER, STARTING_ERC20_BALANCE);
         ERC20Mock(wbtc).mint(USER, STARTING_ERC20_BALANCE);
@@ -56,11 +56,11 @@ contract DSCEngineAdvancedTest is Test {
     function testDepositCollateralAndMintDsc() public {
         vm.startPrank(USER);
         ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
-       dsce.depositColaterallAndMintDsc(weth, AMOUNT_COLLATERAL, MINT_AMOUNT);
+        dsce.depositColaterallAndMintDsc(weth, AMOUNT_COLLATERAL, MINT_AMOUNT);
         vm.stopPrank();
 
         (uint256 totalDscMinted, uint256 collateralValueInUsd) = dsce.getAccountInformation(USER);
-        
+
         assertEq(totalDscMinted, 1000 ether);
         assertEq(collateralValueInUsd, AMOUNT_COLLATERAL * 2000); // 10 * 2000 = 20000
     }
@@ -68,24 +68,23 @@ contract DSCEngineAdvancedTest is Test {
     function testRevertsIfMintBreaksHealthFactor() public {
         vm.startPrank(USER);
         ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
-        
+
         // Try to mint too much DSC (more than 50% of collateral value)
         vm.expectRevert(abi.encodeWithSelector(DSCEngine.DSCEngine__BreaksHealthFactor.selector, 666666666666666666));
         dsce.depositColaterallAndMintDsc(weth, AMOUNT_COLLATERAL, 15000 ether);
         vm.stopPrank();
     }
 
-
     // ============ BurnDsc Tests ============
     function testBurnDsc() public mintedDsc {
         uint256 initialDscMinted = dsce.getDscMinted(USER);
-        
+
         vm.prank(USER);
         dsc.approve(address(dsce), 500 ether);
-        
+
         vm.prank(USER);
         dsce.burnDsc(500 ether);
-        
+
         uint256 finalDscMinted = dsce.getDscMinted(USER);
         assertEq(finalDscMinted, initialDscMinted - 500 ether);
     }
@@ -98,10 +97,10 @@ contract DSCEngineAdvancedTest is Test {
     // ============ RedeemCollateral Tests ============
     function testRedeemCollateral() public depositedCollateral {
         uint256 initialCollateral = dsce.getCollateralBalanceOfUser(USER, weth);
-        
+
         vm.prank(USER);
         dsce.redeemCollateral(weth, 5 ether);
-        
+
         uint256 finalCollateral = dsce.getCollateralBalanceOfUser(USER, weth);
         assertEq(finalCollateral, initialCollateral - 5 ether);
     }
@@ -118,15 +117,15 @@ contract DSCEngineAdvancedTest is Test {
     function testRedeemCollateralForDsc() public mintedDsc {
         uint256 initialCollateral = dsce.getCollateralBalanceOfUser(USER, weth);
         uint256 initialDscMinted = dsce.getDscMinted(USER);
-        
+
         vm.startPrank(USER);
         dsc.approve(address(dsce), 500 ether);
         dsce.redeemCollateralForDsc(weth, 5 ether, 500 ether);
         vm.stopPrank();
-        
+
         uint256 finalCollateral = dsce.getCollateralBalanceOfUser(USER, weth);
         uint256 finalDscMinted = dsce.getDscMinted(USER);
-        
+
         assertEq(finalCollateral, initialCollateral - 5 ether);
         assertEq(finalDscMinted, initialDscMinted - 500 ether);
     }
@@ -146,7 +145,7 @@ contract DSCEngineAdvancedTest is Test {
 
         // Get user's remaining debt and liquidate ALL
         uint256 userDebt = dsce.getDscMinted(USER);
-        
+
         // Liquidator steps in
         vm.startPrank(address(dsce));
         dsc.mint(LIQUIDATOR, userDebt);
@@ -162,7 +161,7 @@ contract DSCEngineAdvancedTest is Test {
         // User should have 0 debt and positive collateral
         uint256 endingDebt = dsce.getDscMinted(USER);
         assertEq(endingDebt, 0, "User should have no debt after full liquidation");
-        
+
         // Health factor should be extremely high (no debt)
         uint256 endingHealthFactor = dsce.getHealthFactor(USER);
         assertGe(endingHealthFactor, 1e18);
@@ -196,10 +195,10 @@ contract DSCEngineAdvancedTest is Test {
         vm.prank(address(dsce));
         dsc.mint(USER, 1000 ether);
         assertEq(dsc.balanceOf(USER), 1000 ether);
-        
+
         vm.prank(USER);
         dsc.approve(address(dsce), 1000 ether);
-        
+
         vm.prank(address(dsce));
         dsc.burnFrom(USER, 500 ether);
         assertEq(dsc.balanceOf(USER), 500 ether);

@@ -7,15 +7,15 @@ import {TimeAwareMockAggregator} from "../mocks/TimeAwareMockAggregator.sol";
 
 contract OracleLibTest is Test {
     TimeAwareMockAggregator mockAggregator;
-    
+
     function setUp() public {
         mockAggregator = new TimeAwareMockAggregator(8, 2000e8);
     }
-    
+
     function testFreshPricePasses() public view {
         OracleLib.staleCheckLatestRoundData(mockAggregator);
     }
-    
+
     function testStalePriceReverts() public {
         vm.warp(block.timestamp + 4 hours);
         vm.expectRevert(OracleLib.OracleLib__StalePrice.selector);

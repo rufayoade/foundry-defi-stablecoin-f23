@@ -39,22 +39,22 @@ contract Handler is Test {
     function mintDsc(uint256 amount) public {
         // Get account info using msg.sender (the fuzzer will handle different users)
         (uint256 totalDscMinted, uint256 collateralValueInUsd) = dsce.getAccountInformation(msg.sender);
-        
+
         // Calculate max they can mint (50% of collateral value minus what they already minted)
         uint256 maxDscToMint = (collateralValueInUsd / 2) - totalDscMinted;
         if (maxDscToMint <= 0) {
             return;
         }
-        
+
         amount = bound(amount, 0, maxDscToMint);
         if (amount == 0) {
             return;
         }
-        
-        vm.startPrank(msg.sender); 
+
+        vm.startPrank(msg.sender);
         dsce.mintDsc(amount);
-        vm.stopPrank(); 
-        timesMintIsCalled++;                                    
+        vm.stopPrank();
+        timesMintIsCalled++;
     }
 
     function depositCollateral(uint256 collateralSeed, uint256 amountCollateral) public {
@@ -72,49 +72,50 @@ contract Handler is Test {
 
     function redeemCollateral(uint256 collateralSeed, uint256 amountCollateral) public {
         ERC20Mock collateral = _getCollateralFromSeed(collateralSeed);
-        
+
         // Check if user has any of THIS specific collateral token
         uint256 maxCollateralToRedeem = dsce.getCollateralBalanceOfUser(msg.sender, address(collateral));
         if (maxCollateralToRedeem == 0) {
             return;
         }
-        
+
         amountCollateral = bound(amountCollateral, 1, maxCollateralToRedeem);
-        
+
         // Try-catch to handle any remaining edge cases
         try dsce.redeemCollateral(address(collateral), amountCollateral) {
-            // Success
-        } catch {
+        // Success
+        }
+        catch {
             return;
         }
     }
-    
+
     function redeemCollateralForDsc(uint256 collateralSeed, uint256 amountCollateral, uint256 amountDscToBurn) public {
         ERC20Mock collateral = _getCollateralFromSeed(collateralSeed);
-        
+
         uint256 maxCollateralToRedeem = dsce.getCollateralBalanceOfUser(msg.sender, address(collateral));
         amountCollateral = bound(amountCollateral, 0, maxCollateralToRedeem);
         if (amountCollateral == 0) return;
-        
+
         uint256 maxBurn = dsce.getDscMinted(msg.sender);
         amountDscToBurn = bound(amountDscToBurn, 0, maxBurn);
         if (amountDscToBurn == 0) return;
-        
+
         vm.startPrank(msg.sender);
         dsc.approve(address(dsce), amountDscToBurn);
         dsce.redeemCollateralForDsc(address(collateral), amountCollateral, amountDscToBurn);
         vm.stopPrank();
     }
-    
+
     function liquidate(uint256 collateralSeed, address userToLiquidate, uint256 debtToCover) public {
         ERC20Mock collateral = _getCollateralFromSeed(collateralSeed);
-        
+
         uint256 healthFactor = dsce.getHealthFactor(userToLiquidate);
         if (healthFactor >= 1e18) return;
-        
+
         uint256 userDebt = dsce.getDscMinted(userToLiquidate);
         debtToCover = bound(debtToCover, 1, userDebt);
-        
+
         vm.startPrank(msg.sender);
         dsc.mint(msg.sender, debtToCover);
         dsc.approve(address(dsce), debtToCover);
@@ -140,7 +141,7 @@ contract Handler is Test {
     function burnDsc(uint256 amount) public {
         uint256 maxBurn = dsce.getDscMinted(msg.sender);
         if (maxBurn == 0) return;
-        
+
         amount = bound(amount, 1, maxBurn);
         vm.startPrank(msg.sender);
         dsc.approve(address(dsce), amount);

@@ -18,7 +18,6 @@ import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Handler} from "./Handler.t.sol";
 
-
 contract Invariants is StdInvariant, Test {
     DeployDSC deployer;
     DSCEngine dsce;
@@ -32,10 +31,10 @@ contract Invariants is StdInvariant, Test {
         deployer = new DeployDSC();
         (dsc, dsce, config) = deployer.run();
         (,, weth, wbtc,) = config.activeNetworkConfig();
-        // targetContract(address(dsce)); 
+        // targetContract(address(dsce));
         handler = new Handler(dsce, dsc);
         targetContract(address(handler));
-        // hey, don't call redeemcollateral, unless there is a collateral to redeem  
+        // hey, don't call redeemcollateral, unless there is a collateral to redeem
         bytes4[] memory selectors = new bytes4[](6);
         selectors[0] = handler.depositCollateral.selector;
         selectors[1] = handler.redeemCollateral.selector;
@@ -65,7 +64,7 @@ contract Invariants is StdInvariant, Test {
         assert(wethValue + wbtcValue >= totalSupply);
     }
 
-    function invariant_gettersShouldNotRevert()  public view {
+    function invariant_gettersShouldNotRevert() public view {
         dsce.getLiquidationBonus();
         dsce.getPrecision();
     }

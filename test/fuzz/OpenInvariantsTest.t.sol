@@ -16,14 +16,14 @@ import {DSCEngine} from "../../src/DSCEngine.sol";
 import {DecentralizedStableCoin} from "../../src/DecentralizedStableCoin.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Handler} from "./Handler.t.sol";  // ✅ ADD THIS
+import {Handler} from "./Handler.t.sol"; // ✅ ADD THIS
 
 contract OpenInvariantsTest is StdInvariant, Test {
     DeployDSC deployer;
     DSCEngine dsce;
     DecentralizedStableCoin dsc;
     HelperConfig config;
-    Handler handler;  // ✅ ADD THIS
+    Handler handler; // ✅ ADD THIS
     address weth;
     address wbtc;
 
@@ -33,7 +33,7 @@ contract OpenInvariantsTest is StdInvariant, Test {
         (,, weth, wbtc,) = config.activeNetworkConfig();
 
         handler = new Handler(dsce, dsc); // ✅ ADD THIS
-        targetContract(address(handler));  // ✅ CHANGE THIS (was address(dsce))
+        targetContract(address(handler)); // ✅ CHANGE THIS (was address(dsce))
     }
 
     function invariant_protocolMustHaveMoreValueThanTotalSupply() public view {

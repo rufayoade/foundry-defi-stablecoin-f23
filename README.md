@@ -1,66 +1,44 @@
-## Foundry
+# Foundry DeFi Stablecoin Protocol
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+A decentralized stablecoin protocol built with Foundry, inspired by MakerDAO's DAI.
 
-Foundry consists of:
+## Overview
+This protocol implements an exogenous, decentralized, anchored stablecoin (DSC) backed by WETH and WBTC collateral. The system maintains a 1:1 USD peg through algorithmic stability mechanisms.
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+## Features
+- **DecentralizedStableCoin (DSC)**: ERC20 token with mint/burn capabilities
+- **DSCEngine**: Core protocol logic for:
+  - Collateral deposits/withdrawals
+  - DSC minting/burning
+  - Liquidation mechanism
+  - Health factor tracking
+  - Price feed integration with stale price protection
 
-## Documentation
+## Testing
+Comprehensive test suite with **28 passing tests**:
+- Unit tests for all core functions
+- Fuzz testing with random inputs
+- Invariant tests ensuring protocol safety
+- Handler-based intelligent fuzzing
+- OracleLib stale price protection
 
-https://book.getfoundry.sh/
+### Test Coverage
+- 79% overall code coverage
+- 100% OracleLib coverage
+- 86% DSCEngine coverage
 
-## Usage
+## Quick Start
+```bash
+# Clone the repository
+git clone https://github.com/rufayoade/foundry-defi-stablecoin-f23.git
+cd foundry-defi-stablecoin-f23
 
-### Build
+# Install dependencies
+forge install
 
-```shell
-$ forge build
-```
+# Run tests
+forge test
 
-### Test
-
-```shell
-$ forge test
-```
-
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+# Run coverage
+forge coverage
 ```

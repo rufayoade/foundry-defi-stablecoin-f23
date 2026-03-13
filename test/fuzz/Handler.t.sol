@@ -59,7 +59,7 @@ contract Handler is Test {
     function depositCollateral(uint256 collateralSeed, uint256 amountCollateral) public {
         console.log("Raw amountCollateral:", amountCollateral);
         console.log("maxDepositSize:", maxDepositSize);
-        
+
         ERC20Mock collateral = _getCollateralFromSeed(collateralSeed);
         amountCollateral = bound(amountCollateral, 1, maxDepositSize);
         console.log("Bounded amountCollateral:", amountCollateral);

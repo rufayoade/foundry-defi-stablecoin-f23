@@ -107,56 +107,56 @@ contract Invariants is StdInvariant, Test {
 
     function invariant_userCannotMintAboveCollateral() public view {
         uint256 userCount = handler.getUsersWithCollateralCount();
-        for (uint i = 0; i < userCount; i++) {
+        for (uint256 i = 0; i < userCount; i++) {
             address user = handler.usersWithCollateralDeposited(i);
             if (user == address(0)) continue;
-            
+
             (uint256 totalMinted, uint256 collateralValue) = dsce.getAccountInformation(user);
-            
+
             // With 150% ratio, max borrow = collateralValue * 100/150
             uint256 maxBorrow = (collateralValue * 100) / 150;
             assert(totalMinted <= maxBorrow);
         }
     }
 
-   function invariant_totalCollateralAccountingMatches() public view {
+    function invariant_totalCollateralAccountingMatches() public view {
         uint256 userCount = handler.getUsersWithCollateralCount();
         if (userCount == 0) return;
-        
+
         // Use an array to track seen users
         address[] memory seenUsers = new address[](userCount);
         uint256 seenCount = 0;
         uint256 totalRecorded = 0;
-        
-        for (uint i = 0; i < userCount; i++) {
+
+        for (uint256 i = 0; i < userCount; i++) {
             address user = handler.usersWithCollateralDeposited(i);
-            
+
             // Check if user already counted
             bool alreadySeen = false;
-            for (uint j = 0; j < seenCount; j++) {
+            for (uint256 j = 0; j < seenCount; j++) {
                 if (seenUsers[j] == user) {
                     alreadySeen = true;
                     break;
                 }
             }
-            
+
             if (!alreadySeen) {
                 seenUsers[seenCount] = user;
                 seenCount++;
                 totalRecorded += dsce.getAccountCollateralValue(user);
             }
         }
-        
+
         uint256 engineWethBalance = IERC20(weth).balanceOf(address(dsce));
         uint256 engineWbtcBalance = IERC20(wbtc).balanceOf(address(dsce));
-        
+
         uint256 wethValue = dsce.getUsdValue(weth, engineWethBalance);
         uint256 wbtcValue = dsce.getUsdValue(wbtc, engineWbtcBalance);
         uint256 engineTotal = wethValue + wbtcValue;
-        
+
         console.log("Total recorded (unique users):", totalRecorded);
         console.log("Engine total:", engineTotal);
-        
+
         // Engine should have at least as much as recorded
         // The difference comes from the liquidation bonus which creates extra value
         assert(engineTotal >= totalRecorded || totalRecorded - engineTotal < 1e18);

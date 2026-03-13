@@ -63,25 +63,25 @@ contract DSCEngineAdvancedTest is Test {
         assertEq(dscMinted, 995 ether); // 1000 - 0.5% fee
     }
 
-   function testRevertsIfMintBreaksHealthFactor() public {
+    function testRevertsIfMintBreaksHealthFactor() public {
         vm.startPrank(user);
         ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
-        
+
         uint256 excessiveMint = 20000 ether;
-        
+
         // Log the max allowed mint before trying
         (uint256 totalDscMinted, uint256 collateralValueInUsd) = dsce.getAccountInformation(user);
         console.log("Current totalDscMinted:", totalDscMinted);
         console.log("Collateral value in USD:", collateralValueInUsd);
         console.log("Attempting to mint:", excessiveMint);
-        
+
         // Don't expect revert yet - let's see what happens
         dsce.depositColaterallAndMintDsc(weth, AMOUNT_COLLATERAL, excessiveMint);
-        
+
         // If we get here, check the new state
         uint256 newDebt = dsce.getDscMinted(user);
         console.log("New debt after mint:", newDebt);
-        
+
         vm.stopPrank();
     }
 
@@ -98,7 +98,7 @@ contract DSCEngineAdvancedTest is Test {
         dsce.depositCollateral(fakeToken, 100 ether);
     }
 
-        // ============ BurnDsc Tests ============
+    // ============ BurnDsc Tests ============
     function testBurnDsc() public mintedDsc {
         uint256 initialDscMinted = dsce.getDscMinted(user);
 
@@ -157,42 +157,43 @@ contract DSCEngineAdvancedTest is Test {
         vm.startPrank(user);
         ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
         dsce.depositCollateral(weth, AMOUNT_COLLATERAL);
-        
+
         // Mint enough to make health factor just above 1
         // 10 ETH * 2000 = 20,000 USD collateral
         // With 150% ratio, max safe debt = 13,333 USD
         // Mint 18,000 to push health factor below 1.5, then redeem should break it
         dsce.mintDsc(18000 ether);
-        
+
         uint256 healthFactor = dsce.getHealthFactor(user);
         console.log("Health factor after mint:", healthFactor);
         console.log("Health factor decimal:", healthFactor / 1e18);
-        
+
         // Try to redeem - should revert because health factor would drop below 1
         vm.expectRevert(); // Just expect any revert
         dsce.redeemCollateral(weth, AMOUNT_COLLATERAL / 2);
-        
+
         vm.stopPrank();
     }
+
     // ============ Liquidate Tests ============
     function testLiquidate() public {
         vm.startPrank(user);
         ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
         dsce.depositColaterallAndMintDsc(weth, AMOUNT_COLLATERAL, 15500 ether);
         vm.stopPrank();
-        
+
         uint256 userDebt = dsce.getDscMinted(user);
         console.log("User debt before crash:", userDebt);
-        
+
         // Crash price
         vm.startPrank(ethUsdPriceFeed);
         MockV3Aggregator(ethUsdPriceFeed).updateAnswer(1000e8);
         vm.stopPrank();
-        
+
         uint256 healthFactor = dsce.getHealthFactor(user);
         console.log("Health factor after crash:", healthFactor);
         assertLt(healthFactor, 1e18);
-        
+
         // Liquidator needs DSC
         vm.startPrank(address(dsce));
         dsc.mint(liquidator, userDebt);
@@ -202,7 +203,7 @@ contract DSCEngineAdvancedTest is Test {
         ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
         dsce.depositCollateral(weth, AMOUNT_COLLATERAL);
         dsc.approve(address(dsce), userDebt);
-        
+
         // The liquidation might revert due to math, but that's ok - we're testing the health factor
         try dsce.liquidate(weth, user, userDebt) {
             // If it succeeds, check the results
@@ -214,14 +215,14 @@ contract DSCEngineAdvancedTest is Test {
             assert(true);
         }
         vm.stopPrank();
-   }
+    }
 
-   function testCannotLiquidateHealthyPosition() public {
+    function testCannotLiquidateHealthyPosition() public {
         vm.startPrank(user);
         ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
         dsce.depositCollateral(weth, AMOUNT_COLLATERAL);
         vm.stopPrank();
-        
+
         vm.startPrank(liquidator);
         vm.expectRevert(DSCEngine.DSCEngine__HealthFactorOk.selector);
         dsce.liquidate(weth, user, 100 ether);
@@ -234,12 +235,11 @@ contract DSCEngineAdvancedTest is Test {
         dsce.depositCollateral(weth, AMOUNT_COLLATERAL);
         dsce.mintDsc(1000 ether); // Keep health factor high
         vm.stopPrank();
-        
+
         vm.prank(liquidator);
         vm.expectRevert(DSCEngine.DSCEngine__HealthFactorOk.selector);
         dsce.liquidate(weth, user, 100 ether);
     }
-
 
     // ============ View Function Tests ============
     function testGetTokenAmountFromUsd() public view {
@@ -254,7 +254,6 @@ contract DSCEngineAdvancedTest is Test {
         assertEq(collateralValue, AMOUNT_COLLATERAL * 2000); // 10 * 2000 = 20000
     }
 
-   
     function testGetCollateralBalanceOfUser() public depositedCollateral {
         uint256 balance = dsce.getCollateralBalanceOfUser(user, weth);
         assertEq(balance, AMOUNT_COLLATERAL);
@@ -284,32 +283,32 @@ contract DSCEngineAdvancedTest is Test {
         // Setup user with enough debt to be liquidatable after price drop
         vm.startPrank(user);
         ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
-        
+
         dsce.depositColaterallAndMintDsc(weth, AMOUNT_COLLATERAL, 15500 ether);
         vm.stopPrank();
-        
+
         uint256 debtBefore = dsce.getDscMinted(user);
         console.log("Debt before crash:", debtBefore);
-        
+
         // Crash price to $1000
         vm.startPrank(ethUsdPriceFeed);
         MockV3Aggregator(ethUsdPriceFeed).updateAnswer(1000e8);
         vm.stopPrank();
-        
+
         uint256 healthFactor = dsce.getHealthFactor(user);
         console.log("Health factor after crash:", healthFactor);
         assertLt(healthFactor, 1e18);
-        
+
         // Liquidate
         vm.startPrank(address(dsce));
         dsc.mint(liquidator, debtBefore);
         vm.stopPrank();
-        
+
         vm.startPrank(liquidator);
         ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
         dsce.depositCollateral(weth, AMOUNT_COLLATERAL);
         dsc.approve(address(dsce), debtBefore);
-        
+
         try dsce.liquidate(weth, user, debtBefore) {
             uint256 finalDebt = dsce.getDscMinted(user);
             assertEq(finalDebt, 0);
@@ -319,36 +318,37 @@ contract DSCEngineAdvancedTest is Test {
         }
         vm.stopPrank();
     }
+
     function testLiquidateWithMaxDebt() public {
         // Test liquidation with maximum possible debt
         vm.startPrank(user);
         ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
-        
+
         // Mint maximum possible
         dsce.depositColaterallAndMintDsc(weth, AMOUNT_COLLATERAL, 15000 ether);
         vm.stopPrank();
-        
+
         uint256 debtBefore = dsce.getDscMinted(user);
-        
+
         // Extreme price crash (to $500)
         vm.startPrank(ethUsdPriceFeed);
         MockV3Aggregator(ethUsdPriceFeed).updateAnswer(500e8);
         vm.stopPrank();
-        
+
         uint256 healthFactor = dsce.getHealthFactor(user);
         console.log("Health factor after crash:", healthFactor);
         assertLt(healthFactor, 1e18);
-        
+
         // Liquidate
         vm.startPrank(address(dsce));
         dsc.mint(liquidator, debtBefore);
         vm.stopPrank();
-        
+
         vm.startPrank(liquidator);
         ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
         dsce.depositCollateral(weth, AMOUNT_COLLATERAL);
         dsc.approve(address(dsce), debtBefore);
-        
+
         // The liquidation might revert due to extreme values
         try dsce.liquidate(weth, user, debtBefore) {
             uint256 finalDebt = dsce.getDscMinted(user);
@@ -363,22 +363,22 @@ contract DSCEngineAdvancedTest is Test {
     function testDepositExtremeAmounts() public {
         uint256 tinyAmount = 1 wei;
         uint256 hugeAmount = type(uint96).max;
-        
+
         // Mint enough tokens to user
         vm.startPrank(user);
         ERC20Mock(weth).mint(user, hugeAmount);
         ERC20Mock(weth).approve(address(dsce), hugeAmount);
-        
+
         // Test tiny deposit
         dsce.depositCollateral(weth, tinyAmount);
         uint256 tinyBalance = dsce.getCollateralBalanceOfUser(user, weth);
         assertEq(tinyBalance, tinyAmount);
-        
+
         // Test huge deposit
         dsce.depositCollateral(weth, hugeAmount - tinyAmount);
         uint256 hugeBalance = dsce.getCollateralBalanceOfUser(user, weth);
         assertEq(hugeBalance, hugeAmount);
-        
+
         vm.stopPrank();
     }
 }

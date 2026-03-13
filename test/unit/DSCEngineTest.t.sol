@@ -40,11 +40,11 @@ contract DSCEngineTest is Test {
         tokenAddresses = new address[](2);
         tokenAddresses[0] = weth;
         tokenAddresses[1] = wbtc;
-        
+
         priceFeedAddresses = new address[](2);
         priceFeedAddresses[0] = ethUsdPriceFeed;
         priceFeedAddresses[1] = btcUsdPriceFeed;
-        
+
         collateralRatios = new uint256[](2);
         collateralRatios[0] = 150;
         collateralRatios[1] = 170;
@@ -57,7 +57,7 @@ contract DSCEngineTest is Test {
     function testRevertsIfTokenLengthDoesntMatchPriceFeeds() public {
         address[] memory badTokenAddresses = new address[](1);
         badTokenAddresses[0] = weth;
-        
+
         address[] memory badPriceFeedAddresses = new address[](2);
         badPriceFeedAddresses[0] = ethUsdPriceFeed;
         badPriceFeedAddresses[1] = btcUsdPriceFeed;
@@ -169,7 +169,7 @@ contract DSCEngineTest is Test {
         vm.startPrank(user);
         dsce.mintDsc(10000 ether);
         vm.stopPrank();
-        
+
         vm.prank(user);
         vm.expectRevert();
         dsce.redeemCollateral(weth, AMOUNT_COLLATERAL * 8 / 10);
@@ -189,7 +189,7 @@ contract DSCEngineTest is Test {
         vm.startPrank(user);
         ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
         dsce.depositCollateral(weth, AMOUNT_COLLATERAL);
-        
+
         vm.expectRevert();
         dsce.mintDsc(1000000 ether);
         vm.stopPrank();
@@ -211,7 +211,7 @@ contract DSCEngineTest is Test {
         dsce.depositCollateral(weth, AMOUNT_COLLATERAL);
         dsce.mintDsc(1000 ether);
         vm.stopPrank();
-        
+
         vm.prank(liquidator);
         vm.expectRevert(DSCEngine.DSCEngine__HealthFactorOk.selector);
         dsce.liquidate(weth, user, 100 ether);
@@ -224,7 +224,7 @@ contract DSCEngineTest is Test {
     function debugPriceFeed() public view {
         address[] memory tokens = dsce.getCollateralTokens();
         console.log("Number of collateral tokens:", tokens.length);
-        for (uint i = 0; i < tokens.length; i++) {
+        for (uint256 i = 0; i < tokens.length; i++) {
             console.log("Token", i, ":", tokens[i]);
             console.log("Price feed:", dsce.getCollateralTokenPriceFeed(tokens[i]));
 

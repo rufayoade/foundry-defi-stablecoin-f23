@@ -25,7 +25,7 @@ contract OracleLibTest is Test {
     function testStalePriceAfterTimeout() public {
         // Fast forward 4 hours (beyond the 3 hour timeout)
         vm.warp(block.timestamp + 4 hours);
-        
+
         // This should revert because price is now stale
         vm.expectRevert(OracleLib.OracleLib__StalePrice.selector);
         OracleLib.staleCheckLatestRoundData(mockAggregator);
@@ -36,13 +36,13 @@ contract OracleLibTest is Test {
         (uint80 roundId, int256 answer,,,) = mockAggregator.getRoundData(0);
         assertEq(roundId, 1);
         assertEq(answer, 2000e8);
-        
+
         // Test description
         assertEq(mockAggregator.description(), "Time Aware Mock Aggregator");
-        
+
         // Test version
         assertEq(mockAggregator.version(), 1);
-        
+
         // Test updatePrice
         mockAggregator.updatePrice(3000e8);
         (, answer,,,) = mockAggregator.latestRoundData();

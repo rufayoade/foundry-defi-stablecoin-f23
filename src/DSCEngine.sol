@@ -71,7 +71,7 @@ contract DSCEngine is ReentrancyGuard, Pausable {
     //State Variables//
     ///////////////////
     uint256 private constant ADDITIONAL_FEED_PRECISION = 1e10;
-     uint256 private constant PRECISION = 1e18;
+    uint256 private constant PRECISION = 1e18;
     uint256 private constant LIQUIDATION_PRECISION = 100;
     uint256 private constant MIN_HEALTH_FACTOR = 1e18;
     uint256 private constant LIQUIDATION_BONUS = 10; // this means a 10% bonus
@@ -349,8 +349,8 @@ contract DSCEngine is ReentrancyGuard, Pausable {
         }
     }
 
-    function _getAccountInformation(address user) 
-        private 
+    function _getAccountInformation(address user)
+        private
         view
         returns (uint256 totalDscMinted, uint256 collateralValueInUsd)
     {
@@ -369,7 +369,7 @@ contract DSCEngine is ReentrancyGuard, Pausable {
         // Calculate weighted average ratio based on user's deposited collateral
         uint256 weightedRatio = _calculateWeightedRatio(user);
 
-       return (collateralValueInUsd * weightedRatio * PRECISION) / (RATIO_DENOMINATOR * totalDSCMinted);
+        return (collateralValueInUsd * weightedRatio * PRECISION) / (RATIO_DENOMINATOR * totalDSCMinted);
     }
 
     function _revertIfHealthFactorIsBroken(address user) internal view {
@@ -422,13 +422,14 @@ contract DSCEngine is ReentrancyGuard, Pausable {
     }
 
     function getAccountCollateralValue(address user) public view returns (uint256 totalCollateralValueInUsd) {
-       uint256 length = s_collateralTokens.length;
+        uint256 length = s_collateralTokens.length;
         for (uint256 i = 0; i < length; i++) {
             address token = s_collateralTokens[i];
             uint256 amount = s_collateralDeposited[user][token];
             if (amount > 0) {
                 totalCollateralValueInUsd += getUsdValue(token, amount);
-            }        }
+            }
+        }
     }
 
     function getUsdValue(address token, uint256 amount) public view returns (uint256) {
@@ -445,7 +446,9 @@ contract DSCEngine is ReentrancyGuard, Pausable {
         return s_priceFeeds[token];
     }
 
-    function getAccountInformation(address user) public view
+    function getAccountInformation(address user)
+        public
+        view
         returns (uint256 totalDscMinted, uint256 collateralValueInUsd)
     {
         if (user == address(0)) {

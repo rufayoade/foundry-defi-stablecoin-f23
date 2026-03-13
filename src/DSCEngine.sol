@@ -61,6 +61,7 @@ contract DSCEngine is ReentrancyGuard, Pausable {
     error DSCEngine__MintFailed();
     error DSCEngine__HealthFactorNotImproved();
     error DSCEngine__HealthFactorOk();
+    error DSCEngine__LiquidationNotAllowed();
 
     ///////////////
     //   Types  //
@@ -282,30 +283,25 @@ contract DSCEngine is ReentrancyGuard, Pausable {
         external
         moreThanZero(debtToCover)
         nonReentrant
-        whenNotPaused // Add this line
-
+        whenNotPaused
     {
         // need to check health factor of the user
         uint256 startingUserHealthFactor = _healthFactor(user);
         if (startingUserHealthFactor >= MIN_HEALTH_FACTOR) {
             revert DSCEngine__HealthFactorOk();
         }
-        // We want to burn their DSC "debt"
-        // And take their collateral
-        // Bad User: $140 ETH, $100 DSC
-        // debtToCover = $100
-        // $100 of DSC == ??? ETH?
-        // 0.05 ETH
-        uint256 tokenAmountFromDebtCovered = getTokenAmountFromUsd(collateral, debtToCover);
-        // And give them a 10% bonus
-        // So we are giving the liquidator $110 of WETH for 100 DSC
-        // We should implement a feature to liquidate in the event the protocol is insolvent
-        // And sweep extra amount into treasury
-        // 0.05 * 0.1 = 0.005. Getting 0.005
+        
+        // Calculate amounts first
+         uint256 tokenAmountFromDebtCovered = getTokenAmountFromUsd(collateral, debtToCover);
         uint256 bonusCollateral = (tokenAmountFromDebtCovered * LIQUIDATION_BONUS) / LIQUIDATION_PRECISION;
         uint256 totalCollateralRedeemed = tokenAmountFromDebtCovered + bonusCollateral;
-        _redeemCollateral(collateral, totalCollateralRedeemed, user, msg.sender);
-        // We need to burn DSC
+        
+        // Then check if user has enough collateral
+        uint256 userCollateralBalance = s_collateralDeposited[user][collateral];
+        require(userCollateralBalance >= totalCollateralRedeemed, "Insufficient collateral for liquidation");
+        
+        // Execute liquidation
+         _redeemCollateral(collateral, totalCollateralRedeemed, user, msg.sender);
         _burnDsc(debtToCover, user, msg.sender);
 
         uint256 endingUserHealthFactor = _healthFactor(user);
@@ -313,8 +309,7 @@ contract DSCEngine is ReentrancyGuard, Pausable {
             revert DSCEngine__HealthFactorNotImproved();
         }
         _revertIfHealthFactorIsBroken(msg.sender);
-    }
-
+     }
     function getHealthFactor() external view {}
 
     /////////////////////////////////////

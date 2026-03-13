@@ -290,18 +290,18 @@ contract DSCEngine is ReentrancyGuard, Pausable {
         if (startingUserHealthFactor >= MIN_HEALTH_FACTOR) {
             revert DSCEngine__HealthFactorOk();
         }
-        
+
         // Calculate amounts first
-         uint256 tokenAmountFromDebtCovered = getTokenAmountFromUsd(collateral, debtToCover);
+        uint256 tokenAmountFromDebtCovered = getTokenAmountFromUsd(collateral, debtToCover);
         uint256 bonusCollateral = (tokenAmountFromDebtCovered * LIQUIDATION_BONUS) / LIQUIDATION_PRECISION;
         uint256 totalCollateralRedeemed = tokenAmountFromDebtCovered + bonusCollateral;
-        
+
         // Then check if user has enough collateral
         uint256 userCollateralBalance = s_collateralDeposited[user][collateral];
         require(userCollateralBalance >= totalCollateralRedeemed, "Insufficient collateral for liquidation");
-        
+
         // Execute liquidation
-         _redeemCollateral(collateral, totalCollateralRedeemed, user, msg.sender);
+        _redeemCollateral(collateral, totalCollateralRedeemed, user, msg.sender);
         _burnDsc(debtToCover, user, msg.sender);
 
         uint256 endingUserHealthFactor = _healthFactor(user);
@@ -309,7 +309,7 @@ contract DSCEngine is ReentrancyGuard, Pausable {
             revert DSCEngine__HealthFactorNotImproved();
         }
         _revertIfHealthFactorIsBroken(msg.sender);
-     }
+    }
     function getHealthFactor() external view {}
 
     /////////////////////////////////////

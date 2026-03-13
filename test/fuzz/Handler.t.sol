@@ -7,8 +7,7 @@ import {DSCEngine} from "../../src/DSCEngine.sol";
 import {DecentralizedStableCoin} from "../../src/DecentralizedStableCoin.sol";
 import {ERC20Mock} from "../mocks/ERC20Mock.sol";
 import {MockV3Aggregator} from "../mocks/MockV3Aggregator.sol";
-import {OracleLib} from "../../src/libraries/OracleLib.sol";
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import {console} from "forge-std/Test.sol";
 
 contract Handler is Test {
     DSCEngine dsce;
@@ -22,7 +21,7 @@ contract Handler is Test {
     MockV3Aggregator public ethUsdPriceFeed;
     address wethPriceFeed;
 
-    uint256 MAX_DEPOSIT_SIZE = type(uint96).max; // the max uint96 value
+    uint256 maxDepositSize = 10_000 ether; // Max 10,000 ETH deposit
     // Add to the top of your Handler with other state variables
     mapping(address => uint256) public timesMinted;
 
@@ -58,8 +57,12 @@ contract Handler is Test {
     }
 
     function depositCollateral(uint256 collateralSeed, uint256 amountCollateral) public {
+        console.log("Raw amountCollateral:", amountCollateral);
+        console.log("maxDepositSize:", maxDepositSize);
+        
         ERC20Mock collateral = _getCollateralFromSeed(collateralSeed);
-        amountCollateral = bound(amountCollateral, 1, MAX_DEPOSIT_SIZE);
+        amountCollateral = bound(amountCollateral, 1, maxDepositSize);
+        console.log("Bounded amountCollateral:", amountCollateral);
 
         vm.startPrank(msg.sender);
         collateral.mint(msg.sender, amountCollateral);
@@ -147,5 +150,9 @@ contract Handler is Test {
         dsc.approve(address(dsce), amount);
         dsce.burnDsc(amount);
         vm.stopPrank();
+    }
+
+    function getUsersWithCollateralCount() external view returns (uint256) {
+        return usersWithCollateralDeposited.length;
     }
 }

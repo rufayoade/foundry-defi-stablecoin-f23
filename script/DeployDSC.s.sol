@@ -17,10 +17,20 @@ contract DeployDSC is Script {
             helperConfig.activeNetworkConfig();
         tokenAddresses = [weth, wbtc];
         priceFeedAddresses = [wethUsdPriceFeed, wbtcUsdPriceFeed];
+        // Create ratios array
+        uint256[] memory collateralRatios = new uint256[](2);
+        collateralRatios[0] = 150; // 150% for WETH
+        collateralRatios[1] = 170; // 170% for WBTC
 
         vm.startBroadcast(deployerKey);
         DecentralizedStableCoin dsc = new DecentralizedStableCoin();
-        DSCEngine dscEngine = new DSCEngine(tokenAddresses, priceFeedAddresses, address(dsc));
+        DSCEngine dscEngine = new DSCEngine(
+            tokenAddresses,
+            priceFeedAddresses,
+            collateralRatios,
+            address(dsc),
+            msg.sender // Set deployer as initial treasury
+        );
         dsc.transferOwnership(address(dscEngine));
         vm.stopBroadcast();
         return (dsc, dscEngine, helperConfig);
